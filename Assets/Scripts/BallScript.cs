@@ -4,11 +4,13 @@ using UnityEngine;
 
 public class BallScript : MonoBehaviour {
     public float speed;
-
-
     private SpriteRenderer sprite;
-
     private Rigidbody2D rb;
+
+    private AudioSource paddleHit;
+    private AudioSource goal;
+    private AudioSource wallHit;
+    private AudioSource[] audio;
 
     //0 = White, 1 = Red, 2 = Blue
     private int colorState;
@@ -17,6 +19,10 @@ public class BallScript : MonoBehaviour {
 	void Start () {
         rb = GetComponent<Rigidbody2D>();
         sprite = GetComponent<SpriteRenderer>();
+        audio = GetComponents<AudioSource>();
+        goal = audio[0];
+        paddleHit = audio[1];
+        wallHit = audio[2];
         ResetBall();
 	}
 	
@@ -68,23 +74,26 @@ public class BallScript : MonoBehaviour {
 
         
 
-        if (collision.collider.name == "GoalRight")
+        if (collision.collider.name == "GoalRight" || collision.collider.name == "GoalLeft")
         {
-            ResetBall();
-        } 
-        if (collision.collider.name == "GoalLeft")
-        {
+            GameScript.Score("collision.collider.name");
+            goal.Play();
             ResetBall();
         }
-        if (collision.collider.tag == "Player")
+        else if (collision.collider.tag == "Player")
         { 
+            paddleHit.Play();
             rb.AddForce(collision.collider.GetComponent<Rigidbody2D>().velocity * speed);
             if (sprite.color == Color.white) changeColor(collision.collider.GetComponent<PlayerScript>().colorState);
             else
             {
-                if (collision.collider.GetComponent<PlayerScript>().colorState != colorState) ResetBall();
+                if (collision.collider.GetComponent<PlayerScript>().colorState != colorState) {
+                    if(collision.collider.name == "Player") GameScript.Score("GoalLeft");
+                    else GameScript.Score("GoalRight");
+                    ResetBall();
+                }
                 else changeColor(0);
             }
-        }
+        }else wallHit.Play();
     }
 }
